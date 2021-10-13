@@ -3,21 +3,30 @@ import {Fraction, isEqual, mix, multi, recurring} from "../decimal";
 class Decimal {
     private readonly number: number | string;
     private integer: number = 0;
-    private decimal: number | string = '';
-    private readonly recurring: number | string;
+    private decimal: number = 0;
+    private readonly recurring: number | string = '';
+    private fraction: Fraction | null = null;
+    public constructor(number: number | string, recurring: string | number);
+    public constructor(number: number | string, fraction: Fraction);
+    public constructor(number: number | string);
 
-    constructor(number: number | string, recurring: number | string = '') {
-        this.number = number;
-        this.recurring = recurring;
+    public constructor(...args: any[]) {
+        if(typeof args[1] === 'object') {
+            this.number = args[0];
+            this.fraction = args[1];
+        }
+        else {
+            this.number = args[0];
+            this.recurring = args[1] || '';
+        }
         this.separate();
-        this.integerToBinary();
     }
 
     private separate() {
         const stringNumber = `${this.number}`;
         const [integer, decimal] = stringNumber.split('.');
         this.integer = parseInt(integer);
-        this.decimal = parseInt(decimal) || '';
+        this.decimal = parseFloat(`0.${decimal}`);
     }
 
     private integerToBinary(): string {
@@ -29,14 +38,20 @@ class Decimal {
             number = Math.floor(number / 2);
         }
 
-        return result.reverse().join('')
+        return result.reverse().join('');
     }
 
     private recurringToBinary() {
+        this.fraction = recurring(this.recurring, this.decimal || '');
+        return this.fractionToBinary();
+    }
+
+    public fractionToBinary() {
+        if(this.fraction === null) return;
+
         const repeated = [], result = [], operations = [];
         let recurringStart = -1;
-        const fraction: Fraction = recurring(this.recurring, this.decimal);
-        let tempFraction = fraction;
+        let tempFraction = this.fraction;
 
         while (recurringStart === -1) {
             repeated.push(tempFraction);
@@ -62,20 +77,40 @@ class Decimal {
         return {
             number: {
                 integer: this.integerToBinary(),
-                decimal: result.splice(0, recurringStart).join('') || null,
-                recurring: result.splice(recurringStart, result.length).join('') || null
+                decimal: result.slice(0, recurringStart).join('') || null,
+                recurring: result.slice(recurringStart, result.length).join('') || null
             },
-            fraction,
+            fraction: this.fraction,
             operations
         }
     }
 
     private decimalToBinary() {
-        const repeated = [], result = [], operations = [];
-        let flag: boolean = true;
-        let number = this.decimal;
+        const repeated = [], result: number[] = [], operations = [];
+        let recurringStart = -1;
+        let number: number = this.decimal;
+        const decimalLength = `${this.decimal}`.split('.')[1].length;
 
-        return null;
+        while(recurringStart === -1) {
+            repeated.push(number);
+            const integerPart: number = Math.floor(number * 2);
+            number = parseFloat(((number * 2) - integerPart).toFixed(decimalLength));
+            result.push(integerPart);
+            if (number === 0) break;
+            repeated.forEach((n, index) => {
+                if(n === number) {
+                    recurringStart = index;
+                }
+            });
+        }
+
+        return {
+            number: {
+                integer: this.integerToBinary(),
+                decimal: recurringStart === -1 ? result.join('') : result.slice(0, recurringStart).join('') || null,
+                recurring: recurringStart === -1 ? null : result.slice(recurringStart, result.length).join('')
+            },
+        }
     }
 
     public toBinary() {
@@ -83,7 +118,11 @@ class Decimal {
             return this.recurringToBinary();
         }
 
-        if(this.decimal === '') {
+        if(this.fraction !== null) {
+            return this.fractionToBinary();
+        }
+
+        if(this.decimal === 0) {
             return this.integerToBinary();
         }
 

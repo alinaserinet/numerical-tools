@@ -1,0 +1,20 @@
+{
+  "name": "numbers-tools",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "ts-node ./index.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alinaserinet/numbers-tools.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/alinaserinet/numbers-tools/issues"
+  },
+  "homepage": "https://github.com/alinaserinet/numbers-tools#readme"
+}
