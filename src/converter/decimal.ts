@@ -3,7 +3,7 @@ import {Fraction, isEqual, mix, multi, recurring} from "../decimal";
 class Decimal {
     private readonly number: number | string;
     private integer: number = 0;
-    private decimal: number = 0;
+    private decimal: string = '';
     private readonly recurring: number | string = '';
     private fraction: Fraction | null = null;
     public constructor(number: number | string, recurring: string | number);
@@ -26,7 +26,7 @@ class Decimal {
         const stringNumber = `${this.number}`;
         const [integer, decimal] = stringNumber.split('.');
         this.integer = parseInt(integer);
-        this.decimal = parseFloat(`0.${decimal}`);
+        this.decimal = decimal || '';
     }
 
     private integerToBinary(): string {
@@ -42,7 +42,7 @@ class Decimal {
     }
 
     private recurringToBinary() {
-        this.fraction = recurring(this.recurring, this.decimal || '');
+        this.fraction = recurring(this.recurring, this.decimal);
         return this.fractionToBinary();
     }
 
@@ -65,8 +65,9 @@ class Decimal {
             }
 
             operations.push(operation);
-
+            if(res.fraction.numerator === 0) break;
             tempFraction = res.fraction;
+
             repeated.forEach((r, index) => {
                 if (r && isEqual(r, tempFraction)) {
                     recurringStart = index;
@@ -77,8 +78,8 @@ class Decimal {
         return {
             number: {
                 integer: this.integerToBinary(),
-                decimal: result.slice(0, recurringStart).join('') || null,
-                recurring: result.slice(recurringStart, result.length).join('') || null
+                decimal: recurringStart === -1 ? result.join('') : result.slice(0, recurringStart).join('') || null,
+                recurring: recurringStart === -1 ? null : result.slice(recurringStart, result.length).join('') || null
             },
             fraction: this.fraction,
             operations
@@ -88,14 +89,25 @@ class Decimal {
     private decimalToBinary() {
         const repeated = [], result: number[] = [], operations = [];
         let recurringStart = -1;
-        let number: number = this.decimal;
-        const decimalLength = `${this.decimal}`.split('.')[1].length;
+        let number: number = parseFloat(`0.${this.decimal}`);
+        const decimalLength = this.decimal.length;
 
         while(recurringStart === -1) {
             repeated.push(number);
             const integerPart: number = Math.floor(number * 2);
-            number = parseFloat(((number * 2) - integerPart).toFixed(decimalLength));
+            const decimalPart = parseFloat(((number * 2) - integerPart).toFixed(decimalLength));
             result.push(integerPart);
+
+            const operation = {
+                operands: [number, 2],
+                operators: ['*'],
+                result: [integerPart, decimalPart]
+            }
+
+            operations.push(operation);
+
+            number = decimalPart;
+
             if (number === 0) break;
             repeated.forEach((n, index) => {
                 if(n === number) {
@@ -108,8 +120,9 @@ class Decimal {
             number: {
                 integer: this.integerToBinary(),
                 decimal: recurringStart === -1 ? result.join('') : result.slice(0, recurringStart).join('') || null,
-                recurring: recurringStart === -1 ? null : result.slice(recurringStart, result.length).join('')
+                recurring: recurringStart === -1 ? null : result.slice(recurringStart, result.length).join('') || null
             },
+            operations
         }
     }
 
@@ -122,7 +135,7 @@ class Decimal {
             return this.fractionToBinary();
         }
 
-        if(this.decimal === 0) {
+        if(this.decimal === '') {
             return this.integerToBinary();
         }
 

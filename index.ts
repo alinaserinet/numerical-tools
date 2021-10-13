@@ -1,5 +1,6 @@
 import {Decimal} from "./src/converter";
 
-const number = new Decimal('11', {numerator: 1, denominator: 99});
+const number = new Decimal('6.291', '6');
 
+// @ts-ignore
 console.log(number.toBinary());
