@@ -4,20 +4,19 @@ class Decimal {
     private readonly number: number | string;
     private integer: number = 0;
     private decimal: string = '';
-    private readonly recurring: number | string = '';
+    private readonly recurring: string = '';
     private fraction: Fraction | null = null;
+
     public constructor(number: number | string, recurring: string | number);
     public constructor(number: number | string, fraction: Fraction);
     public constructor(number: number | string);
 
     public constructor(...args: any[]) {
-        if(typeof args[1] === 'object') {
-            this.number = args[0];
+        this.number = args[0];
+        if (typeof args[1] === 'object') {
             this.fraction = args[1];
-        }
-        else {
-            this.number = args[0];
-            this.recurring = args[1] || '';
+        } else if(args[1] !== undefined){
+            this.recurring = `${args[1]}` || '';
         }
         this.separate();
     }
@@ -46,8 +45,8 @@ class Decimal {
         return this.fractionToBinary();
     }
 
-    public fractionToBinary() {
-        if(this.fraction === null) return;
+    private fractionToBinary() {
+        if (this.fraction === null) return;
 
         const repeated = [], result = [], operations = [];
         let recurringStart = -1;
@@ -65,7 +64,7 @@ class Decimal {
             }
 
             operations.push(operation);
-            if(res.fraction.numerator === 0) break;
+            if (res.fraction.numerator === 0) break;
             tempFraction = res.fraction;
 
             repeated.forEach((r, index) => {
@@ -92,7 +91,7 @@ class Decimal {
         let number: number = parseFloat(`0.${this.decimal}`);
         const decimalLength = this.decimal.length;
 
-        while(recurringStart === -1) {
+        while (recurringStart === -1) {
             repeated.push(number);
             const integerPart: number = Math.floor(number * 2);
             const decimalPart = parseFloat(((number * 2) - integerPart).toFixed(decimalLength));
@@ -110,7 +109,7 @@ class Decimal {
 
             if (number === 0) break;
             repeated.forEach((n, index) => {
-                if(n === number) {
+                if (n === number) {
                     recurringStart = index;
                 }
             });
@@ -127,15 +126,15 @@ class Decimal {
     }
 
     public toBinary() {
-        if(this.recurring !== ''){
+        if (this.recurring !== '') {
             return this.recurringToBinary();
         }
 
-        if(this.fraction !== null) {
+        if (this.fraction !== null) {
             return this.fractionToBinary();
         }
 
-        if(this.decimal === '') {
+        if (this.decimal === '') {
             return this.integerToBinary();
         }
 
